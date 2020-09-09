@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+
+  configserver:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: config-server-api
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    restart: always
+    networks:
+      - erp-network
+
+  serviceregistry:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: service-registry-server-api
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    depends_on:
+      - configserver
+    restart: always
+    networks:
+      - erp-network
+  
+# Networks to be created to facilitate communication between containers
+networks:
+  erp-network:

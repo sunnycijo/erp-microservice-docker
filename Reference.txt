@@ -1,1 +1,44 @@
 localhost:9070/store/v1/sell
+
+edge-server-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: edge-server-api
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    depends_on:
+      - config-server-api
+      - service-registry-server-api
+    restart: always
+    networks:
+      - erp-network
+
+  customer-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: customer-api
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8091"
+    restart: always
+    depends_on:
+      - config-server-api
+      - service-registry-server-api
+    networks:
+      - erp-network
+
+  sales-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: sales-api
+      dockerfile: Dockerfile
+    ports:
+      - "9070:9070"
+    depends_on:
+      - config-server-api
+      - service-registry-server-api
+      - customer-api
+    restart: always
+    networks:
+      - erp-network
