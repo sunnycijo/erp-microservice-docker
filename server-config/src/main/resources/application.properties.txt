@@ -1,0 +1,6 @@
+server.port=8888
+spring.application.name=config-server
+
+#spring.profiles.active=native
+spring.cloud.config.server.git.uri=https://github.com/sunnycijo/erp-config-repo
+spring.cloud.config.server.git.search-paths=customer-api,edge-server-api,hra-api,inventory-api,login-api,procurement-api,sales-api,service-registry-server-api
