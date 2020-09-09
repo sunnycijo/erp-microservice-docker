@@ -1,0 +1,82 @@
+version: '3.7'
+services:
+
+  serviceregistry:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: server-eureka
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    restart: always
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: server-eureka
+      PROFILE: default
+    networks:
+      - erp-network
+
+  proxyserver:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: server-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    restart: always
+    depends_on:
+      - serviceregistry
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: server-proxy
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+    networks:
+      - erp-network
+      
+  customer-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: customer-api
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - serviceregistry
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: customer-api
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+    networks:
+      - erp-network
+      
+  sales-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: sales-api
+      dockerfile: Dockerfile
+    ports:
+      - "9091:9091"
+    restart: always
+    depends_on:
+      - serviceregistry
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: sales-api
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+    networks:
+      - erp-network
+  
+# Networks to be created to facilitate communication between containers
+networks:
+  erp-network:
