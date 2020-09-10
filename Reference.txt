@@ -1,5 +1,11 @@
 localhost:9070/store/v1/sell
 
+localhost:8082/info/v1/idfromphone
+localhost:8081/info/v1/idfromphone
+localhost:8081/registration/v1/customer
+
+docker-compose -f docker-compose.micro-service.yml up --scale customer-api=2
+
 edge-server-api:
     #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
     build:
