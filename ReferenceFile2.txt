@@ -1,0 +1,341 @@
+Difference between virutlization and dockerization?
+Docker desktop.
+
+Checking version
+docker --version
+
+docker container run cijosunny/todo-rest-api:1.0.0.RELEASE
+Pulls docker image and runs application
+
+hub.docker.com -> docker registry
+hub.docker.com/r/cijosunny/todo-rest-api
+has number of tags 1.0.0.RELEASE
+
+image is static version
+container is a running version - for 1 image there can be many running version/ running containers
+docker container run cijosunny/todo-rest-api:1.0.0.RELEASE
+
+docker client ==> where we execute commmand
+docker daemon ==> where 
+Local Images ==>
+Local Containers ==>
+Remote Images
+
+Elastic Container Service
+Azure Container Service
+
+
+Build docker image from a Java project - Manually:
+1. Build maven jar file
+2. pull jdk alpine image 
+3. run jdk alpine image [docker container run -dit openjdk:8-jdk-alpine]
+	-d => detatched i =>interactive t => tty
+	helps to run commands against running container
+4. docker container ls
+	this shows the container name (for example - naughty_knuth)
+5. docker container exec naughty_knuth ls /tmp
+	shows files in tmp folder
+6. docker container cp target/hello-world.jar naughty_knuth:/tmp
+	cp => command to copy
+	naughty_knuth:/tmp => tmp directory inside container "naughty_knuth"
+7. docker container exec naughty_knuth ls /tmp
+	now shows the jar file which was copied
+8. docker container commit naughty_knuth cijosunny/hello-world:manual1
+	run "docker images" to see the newly created image
+	run "docker container run cijosunny/hello-world:manual1" nothing will happen as there is no bootstrap method
+9. docker container commit --change='CMD ["java","-jar","/tmp/hello-world.jar"]' naughty_knuth cijosunny/hello-world:manual2
+	run "docker images" to see newly created image
+	run "docker container run -p 8080:8080 cijosunny/hello-world:manual2"
+10 Open browser and navigate to "localhost:8080"
+
+
+Build docker image using Dockerfile
+1. Create Dockerfile in root directory
+2. Inside file 
+	FROM openjdk:8-jdk-alpine
+	EXPOSE 8080
+	ADD target/hello-world.jar hello-world.jar		==> root folder
+	ENTRYPOINT ["sh","-c","java -jar /hello-world.jar"]
+3. Run the command
+	docker build -t cijosunny/hello-world:dockerfile1 .
+	This builds the docker image with name cijosunny/hello-world:dockerfile1
+4. Run below command
+	docker images
+	This shows the newly created image
+5. Run below command
+	docker history cijosunny/hello-world:dockerfile1
+	This shows all commands which were executed to create the image file
+6. Run below command
+	docker container run cijosunny/hello-world:dockerfile1
+	
+Build docker image using com.spotify dockerfile-maven-plugin
+1. Add Docker file
+	FROM openjdk:8-jdk-alpine
+	VOLUME /tmp
+	EXPOSE 8100
+	ADD target/*.jar app.jar
+	ENV JAVA_OPTS=""
+	ENTRYPOINT [ "sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app.jar" ]
+2. add spotify maven plugin in pom.xml
+	<build>
+		<finalName>todo-web-application-h2</finalName>
+		<plugins>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>1.4.10</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repository>cijosunny/hello-world</repository>
+					<tag>spotify</tag>
+					<skipDockerInfo>true</skipDockerInfo>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+3. RUN mvn install or mvn package
+4. RUN docker images
+5. RUN docker container run cijosunny/hello-world:spotify
+
+
+Running as WAR file
+====================
+1. Add below docker file
+	FROM tomcat:8.0.51-jre8-alpine
+	EXPOSE 8080
+	RUN rm -rf /usr/local/tomcat/webapps/*
+	COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+	CMD ["catalina.sh","run"]
+2. Add spotify maven plugin in pom.xml
+3. Run maven install or maven package
+4. Run - docker images - to see image created
+5. Run - docker container run -p 8080:8080 cijosunny/hello-world:0.0.1.SNAPSHOT
+
+
+COPY vs ADD and ENTRYPOINT vs CMD
+COPY => used to copy only
+ADD => can be used to copy and also download from a link
+CMD => docker container run -p 8080:8080 cijosunny/hello-world:0.0.1.SNAPSHOT ping google.com
+				This will not deploy jar file but only ping google.com
+ENTRYPOINT => docker container run -p 8080:8080 cijosunny/hello-world:0.0.1.SNAPSHOT ping google.com
+				This will always run container
+				
+Best practise --> Use copy if there is only file copy and no downloads, Use ENTRYPOINT 
+
+Run MySQL database as a docker container
+===========================================
+docker container run 
+	-d 
+	-e MYSQL_ROOT_PASSWORD=root 
+	-e MYSQL_DATABASE=appdb 
+	-e MYSQL_USER=admin 
+	-e MYSQL_PASSWORD=admin 
+	-p 3306:3306 
+	mysql:5.7
+
+docker container run 
+	--detatch 
+	--env MYSQL_ROOT_PASSWORD=root 
+	--env MYSQL_DATABASE=appdb 
+	--env MYSQL_USER=admin 
+	--env MYSQL_PASSWORD=admin
+	--name mysql
+	--publish 3306:3306 
+	mysql:5.7	
+	
+In MySQL shell
+connect admin@localhost:3306
+	hit enter
+	enter password
+
+//link is deprecated
+docker container run
+		-p 8080:8080
+		--link=mysql
+		-e RDS_HOSTNAME=mysql 
+		cijosunny/hello-world:0.0.1.SNAPSHOT
+		
+Create custom network for mysql and web app
+============================================
+1. docker network create web-app-mysql-network
+2. Run MySQL container with below command
+	docker container run 
+	--detatch 
+	--env MYSQL_ROOT_PASSWORD=root 
+	--env MYSQL_DATABASE=appdb 
+	--env MYSQL_USER=admin 
+	--env MYSQL_PASSWORD=admin
+	--name mysql
+	--publish 3306:3306
+	--network=web-app-mysql-network
+	--volume mysql-database-volume:/var/lib/mysql
+	mysql:5.7	
+3. Run application with below command
+	docker container run
+	-p 8080:8080
+	--network=web-app-mysql-network
+	-e RDS_HOSTNAME=mysql 
+	cijosunny/hello-world:0.0.1.SNAPSHOT
+4. docker inspect web-app-mysql-network
+
+Create dockerignore file to remove files which we no need to include
+
+Create custom network and launch two microservices and mysql db
+=================================================================
+1. Create docker file in both applications
+2. Add spotify maven plugin in pom.xml
+3. Run maven build
+4. create custom network
+	docker network create micro-mysql-network
+5. run mysql 
+	docker container run 
+	--detatch 
+	--env MYSQL_ROOT_PASSWORD=root 
+	--env MYSQL_DATABASE=appdb 
+	--env MYSQL_USER=admin 
+	--env MYSQL_PASSWORD=admin
+	--name mysql
+	--publish 3306:3306
+	--network=micro-mysql-network
+	--volume mysql-database-volume:/var/lib/mysql
+	mysql:5.7
+6. run microservices
+	docker container run 
+		-p 8000:8000
+		--network=micro-mysql-network
+		--name=currency-exhange-service
+		-d
+		cijosunny/currency-exchange-service:0.0.1.SNAPSHOT
+		
+	docker container run 
+		-p 8100:8100
+		--network=micro-mysql-network
+		--name=currency-conversion-service
+		--env CURRENCY_EXCHANGE_URI=http://currency-exhange-service:8000
+		-d
+		cijosunny/currency-conversion-service:0.0.1.SNAPSHOT	
+		
+Using docker compose
+=====================
+docker-compose.yml
+--------------------
+version: '3.7'
+services:
+
+  rabbitmq:
+    image: rabbitmq:3.5.3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    networks:
+      - erp-network
+
+  zipkin-server:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    restart: always
+    environment:
+      STORAGE_TYPE: mem
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    networks:
+      - erp-network
+
+  serviceregistry:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: server-eureka
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    restart: always
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: server-eureka
+      PROFILE: default
+    networks:
+      - erp-network
+
+  proxyserver:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: server-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    restart: always
+    depends_on:
+      - serviceregistry
+      - zipkin-server
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: server-proxy
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+    networks:
+      - erp-network
+      
+  customer-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: customer-api
+      dockerfile: Dockerfile
+    ports:
+      - "8081-8085:8081"
+    restart: always
+    depends_on:
+      - serviceregistry
+      - rabbitmq
+      - zipkin-server
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: customer-api
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+    networks:
+      - erp-network
+      
+  sales-api:
+    #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
+    build:
+      context: sales-api
+      dockerfile: Dockerfile
+    ports:
+      - "9091:9091"
+    restart: always
+    depends_on:
+      - serviceregistry
+      - rabbitmq
+      - zipkin-server
+    environment:
+      CONFIG_SERVER_HOSTNAME: configserver
+      CONFIG_SERVER_PORT: 8888
+      APP_NAME: sales-api
+      PROFILE: default
+      EUREKA_SERVER_HOSTNAME: serviceregistry
+      EUREKA_SERVER_PORT: 8761
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+    networks:
+      - erp-network
+  
+# Networks to be created to facilitate communication between containers
+networks:
+  erp-network:
