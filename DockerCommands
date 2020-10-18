@@ -1,0 +1,141 @@
+docker --version
+
+-p ==> runs in host port 5000
+docker container run -p 5000:5000 cijosunny/todo-rest-api:1.0.0.RELEASE
+
+-d ==> detatched mode
+docker container run -p 5000:5000 -d cijosunny/todo-rest-api:1.0.0.RELEASE
+
+docker container run -p 5000:5000 -d --restart=always cijosunny/todo-rest-api:1.0.0.RELEASE
+docker container run -p 5000:5000 -d --restart=no cijosunny/todo-rest-api:1.0.0.RELEASE
+no is the default value
+
+docker container run -p 5000:5000 -d --restart=no -m 512m --cpu-quota 5000 cijosunny/todo-rest-api:1.0.0.RELEASE
+-m can be values like 512m or 1G
+--cpu-quota default value is 100,000 = 100% [5000 = 5%/ 50,000 = 50%]
+
+Restart a container:
+docker container restart cijosunny/hello-world:1.0.0.RELEASE
+
+docker logs 123445 
+123445 ==> container id
+
+docker logs -f 123445
+-f => Follow logs
+
+docker container ls
+docker container ls -a
+
+docker images
+
+docker container stop 122334
+122334 => container id
+
+docker tag cijosunny/todo-rest-api:1.0.0.RELEASE cijosunny/todo-rest-api:latest
+
+docker pull mysql ==> docker pull mysql:latest
+pulls latest 
+
+
+docker search mysql
+
+docker image history 12344
+12344 => image id
+
+docker image inspect 12344
+12344 => image id
+
+docker image remove 12344
+12344 => image id
+
+docker container pause 6778
+6778=> container id
+
+docker container unpause 6778
+
+docker container inspect 6778
+
+
+docker container prune
+and then y
+
+dokcer container stop ===> Graceful shutdown [SIGTERM]
+docker container kill ===> Immediately terminate
+
+
+docker events
+shows details about events (volume mount/volume unmount/container stop/ cont) in docker daemon
+
+
+docker top
+shows all the processes running in docker
+
+
+docker stats
+Details of all the containers which are running at that point
+Memory usage
+CPU usage
+Container ID
+Container name
+
+
+docker system df
+gives all details in docker system
+no of images
+no of containers
+amount of local volume
+
+Create docker file and run below command to create docker image
+docker build -t cijosunny/hello-world:dockerfile1 .
+
+docker login
+	Enter username and password
+
+Push an image to docker hub	
+docker push cijosunny/hello-world:0.0.2.RELEASE
+
+Run MySQL Database as a docker container
+docker container run 
+	-d 
+	-e MYSQL_ROOT_PASSWORD=root 
+	-e MYSQL_DATABASE=appdb 
+	-e MYSQL_USER=admin 
+	-e MYSQL_PASSWORD=admin 
+	-p 3306:3306 
+	mysql:5.7
+
+docker network ls
+displays all networks
+	-bridge
+	-host
+	-none
+	
+docker inspect bridge
+displays all containers in bridge network
+
+running in bridge network with --link
+docker container run
+		-p 8080:8080
+		--link=mysql
+		-e RDS_HOSTNAME=mysql 
+		cijosunny/hello-world:0.0.1.SNAPSHOT
+		
+running in host network (will work only in linux)
+docker container run
+		--network=host 
+		cijosunny/hello-world:0.0.1.SNAPSHOT		
+
+Running mySQL container with volume and custom network
+docker network create web-app-mysql-network
+docker container run 
+	--detatch 
+	--env MYSQL_ROOT_PASSWORD=root 
+	--env MYSQL_DATABASE=appdb 
+	--env MYSQL_USER=admin 
+	--env MYSQL_PASSWORD=admin
+	--name mysql
+	--publish 3306:3306
+	--network=web-app-mysql-network
+	--volume mysql-database-volume:/var/lib/mysql
+	mysql:5.7	
+	
