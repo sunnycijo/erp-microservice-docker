@@ -6,6 +6,8 @@ localhost:8081/registration/v1/customer
 
 docker-compose -f docker-compose.micro-service.yml up --scale customer-api=2
 
+kompose convert -f  docker-compose.micro-service.yml 
+
 edge-server-api:
     #image: cijosunny/config-server-api:0.0.1-SNAPSHOT
     build:

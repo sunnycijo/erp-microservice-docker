@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+    kompose.version: 1.19.0 (f63a961c)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sales-api
+  name: sales-api
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+        kompose.version: 1.19.0 (f63a961c)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: sales-api
+    spec:
+      containers:
+      - env:
+        - name: APP_NAME
+          value: sales-api
+        - name: CONFIG_SERVER_HOSTNAME
+          value: configserver
+        - name: CONFIG_SERVER_PORT
+          value: "8888"
+        - name: EUREKA_SERVER_HOSTNAME
+          value: serviceregistry
+        - name: EUREKA_SERVER_PORT
+          value: "8761"
+        - name: PROFILE
+          value: default
+        - name: RABBIT_URI
+          value: amqp://guest:guest@rabbitmq:5672
+        image: sales-api
+        name: sales-api
+        ports:
+        - containerPort: 9091
+        resources: {}
+      restartPolicy: Always
+status: {}

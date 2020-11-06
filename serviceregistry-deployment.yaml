@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+    kompose.version: 1.19.0 (f63a961c)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: serviceregistry
+  name: serviceregistry
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+        kompose.version: 1.19.0 (f63a961c)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: serviceregistry
+    spec:
+      containers:
+      - env:
+        - name: APP_NAME
+          value: server-eureka
+        - name: CONFIG_SERVER_HOSTNAME
+          value: configserver
+        - name: CONFIG_SERVER_PORT
+          value: "8888"
+        - name: PROFILE
+          value: default
+        image: serviceregistry
+        name: serviceregistry
+        ports:
+        - containerPort: 8761
+        resources: {}
+      restartPolicy: Always
+status: {}

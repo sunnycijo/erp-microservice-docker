@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+    kompose.version: 1.19.0 (f63a961c)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: customer-api
+  name: customer-api
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.micro-service.yml
+        kompose.version: 1.19.0 (f63a961c)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: customer-api
+    spec:
+      containers:
+      - env:
+        - name: APP_NAME
+          value: customer-api
+        - name: CONFIG_SERVER_HOSTNAME
+          value: configserver
+        - name: CONFIG_SERVER_PORT
+          value: "8888"
+        - name: EUREKA_SERVER_HOSTNAME
+          value: serviceregistry
+        - name: EUREKA_SERVER_PORT
+          value: "8761"
+        - name: PROFILE
+          value: default
+        - name: RABBIT_URI
+          value: amqp://guest:guest@rabbitmq:5672
+        image: customer-api
+        name: customer-api
+        ports:
+        - containerPort: 8081
+        resources: {}
+      restartPolicy: Always
+status: {}
